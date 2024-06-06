@@ -144,45 +144,84 @@ public class Block implements Cloneable {
     public Block portion(int nbrPortion, int index) {
         boolean[] newBlock = new boolean[this.block.length / nbrPortion];
 
-        System.arraycopy(this.block, 0 + index * newBlock.length, newBlock, 0, newBlock.length);
+        System.arraycopy(this.block, index * newBlock.length, newBlock, 0, newBlock.length);
 
         return new Block(newBlock);
     }
 
-    public Block xOr(Block secondMember) {
-        boolean[] block = ;
+    // confidence 5
+    public Block xOr(Block other) {
+        boolean[] block = new boolean[this.block.length];
+
+        for (int bitIndex = 0; bitIndex < this.block.length; ++bitIndex) {
+            block[bitIndex] = this.block[bitIndex] != other.block[bitIndex];
+        }
 
         return new Block(block);
     }
 
+    // confidence 5
     public Block leftShift() {
-        //TODO
-        return null;
+        for (int bitIndex = 1; bitIndex < this.block.length; ++bitIndex) {
+            this.block[bitIndex - 1] = this.block[bitIndex];
+        }
+
+        this.block[this.block.length - 1] = false;
+
+        return this;
     }
 
     public int rowValue() {
-        //TODO
-        return -1;
+        Block portion = this.portion(2, 0);
+
+        return blockToDecimal(portion);
     }
 
     public int columnValue() {
-        //TODO
-        return -1;
+        Block portion = this.portion(2, 1);
+
+        return blockToDecimal(portion);
     }
 
     public Block modularMultByX() {
-        //TODO
-        return null;
+        Block result = leftShift();
+
+        if (this.block[0]) {
+            result = modularMult(result);
+        }
+
+        return result;
     }
 
-    public Block modularMult(Block prod) {
-        //TODO
-        return null;
+    public Block modularMult(Block other) {
+        Block result = new Block(this.block.length);
+        Block xdegree = this.clone();
+
+        for (boolean bit : other.block) {
+            if (bit) {
+                result = result.xOr(xdegree);
+            }
+
+            xdegree = xdegree.modularMultByX();
+        }
+
+        return result;
     }
 
     public Block g(SBox sbox, Block rc) {
         //TODO
         return null;
+    }
+
+    // confidence 0 (gpt)
+    public static int blockToDecimal(Block block) {
+        int decimalValue = 0;
+
+        for (boolean bit: block.block) {
+            decimalValue = (decimalValue << 1) | (bit ? 1 : 0);
+        }
+
+        return decimalValue;
     }
 
 }
