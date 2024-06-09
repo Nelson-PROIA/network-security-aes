@@ -10,9 +10,17 @@ package com.dauphine.aes;
 public class Block implements Cloneable {
 
     /**
+     * Represents the generator polynomial used in AES key expansion.
+     * This polynomial is used in certain key expansion operations.
+     *
+     * @see Block
+     */
+    public final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
+
+    /**
      * The array of bits representing the binary data.
      */
-    private boolean[] bits;
+    public boolean[] bits;
 
     /**
      * Constructs a block of binary data with the specified size.
@@ -30,10 +38,11 @@ public class Block implements Cloneable {
      * @param value The value to initialize the block with.
      */
     public Block(int size, int value) {
+        // TODO
         this(size);
-
-        for (int i = size - 1; i >= 0; --i) {
-            this.bits[i] = (value & (1 << i)) != 0;
+        for(int i = size - 1; i > -1; i--) {
+            this.bits[i] = ((value % 2) == 1);
+            value /= 2;
         }
     }
 
@@ -140,6 +149,26 @@ public class Block implements Cloneable {
     }
 
     /**
+     * Retrieves the decimal value of the row index from the block.
+     * The row index is obtained from the first segment of the block.
+     *
+     * @return The decimal value of the row index.
+     */
+    public int rowValue() {
+        return getSegment(2, 0).toDecimal();
+    }
+
+    /**
+     * Retrieves the decimal value of the column index from the block.
+     * The column index is obtained from the second segment of the block.
+     *
+     * @return The decimal value of the column index.
+     */
+    public int columnValue() {
+        return getSegment(2, 1).toDecimal();
+    }
+
+    /**
      * Performs an exclusive OR (XOR) operation between two blocks.
      *
      * @param other The other block to perform XOR with.
@@ -178,7 +207,7 @@ public class Block implements Cloneable {
         Block result = this.leftShift();
 
         if (this.bits[0]) {
-            return modularMultiplication(result);
+            return result.modularMultiplication(GENERATOR_POLYNOMIAL);
         }
 
         return result;
@@ -198,6 +227,7 @@ public class Block implements Cloneable {
             if (bit) {
                 result = result.xOr(multiplier);
             }
+
             multiplier = multiplier.modularMultiplicationByX();
         }
 
@@ -213,14 +243,14 @@ public class Block implements Cloneable {
      * @see SBox
      */
     public Block g(SBox sbox, Block roundConstant) {
-        final int blockSize = this.bits.length / 4;
         Block[] subBlocks = new Block[4];
 
         for (int i = 0; i < 4; ++i) {
-            subBlocks[i] = sbox.cypher(this.getSegment(blockSize, (i + 1) % 4));
+            subBlocks[i] = sbox.cypher(this.getSegment(4, (i + 1) % 4));
         }
 
         Block newBlock = new Block(subBlocks);
+        roundConstant = new Block( roundConstant.toString() + "0".repeat(24));
 
         return newBlock.xOr(roundConstant);
     }

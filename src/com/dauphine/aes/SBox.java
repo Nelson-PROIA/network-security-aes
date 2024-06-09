@@ -14,15 +14,13 @@ public class SBox {
         }
     }
 
-    public Block cypher(Block toCypher) {
-        int int_line=toCypher.rowValue();
-        int int_column=toCypher.columnValue();
+    public Block cypher(Block block) {
+        int rowValue = block.rowValue();
+        int columnValue = block.columnValue();
 
-        int Values_In_SBox=this.matrix[int_line][int_column];
-        
-        Block block_in_SBox=new Block(int_column, Values_In_SBox);
-        
-        return block_in_SBox;
+        int value = this.matrix[rowValue][columnValue];
+
+        return new Block(block.bits.length, value);
     }
 
 }

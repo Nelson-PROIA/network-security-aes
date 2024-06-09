@@ -10,15 +10,6 @@ package com.dauphine.aes;
 public class Key {
 
     /**
-     * Represents the generator polynomial used in AES key expansion.
-     * This polynomial is used in certain key expansion operations.
-     *
-     * @see Block
-     */
-    private final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
-
-
-    /**
      * Array of blocks representing the key.
      *
      * @see Block
@@ -96,7 +87,7 @@ public class Key {
      * @see Block
      */
     public Key[] genSubKeys(SBox sBox) {
-        Block roundConstant = GENERATOR_POLYNOMIAL.clone();
+        Block roundConstant = new Block(8, 1);
         Key[] subKeys = new Key[11];
         subKeys[0] = new Key(this);
 
