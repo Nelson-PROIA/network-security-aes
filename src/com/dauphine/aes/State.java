@@ -48,6 +48,8 @@ public class State {
         State State_after_substitue=new State();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
+                //cette fonction renvoie le Block aprés l'affection des valeurs de la SBOX
+                // On reprend la fonction Cypher qui renvoie la valeur correspondante au block dans la SBOX
                 Block new_block_to_add=sbox.cypher(this.bytes[i][j]);
                 State_after_substitue.bytes[i][j]=new_block_to_add;
             }  
@@ -59,7 +61,7 @@ public class State {
         State State_after_shift=new State();
         for(int i=0;i<4;i++){
             for (int j = 0; j < 4; j++) {
-
+                // ce modulo permet de faire un décalage de i (numéro de ligne) des valeurs de la ligne vers la GAUCHE 
                 State_after_shift.bytes[i][j]=this.bytes[i][(j-i+4)%4];
             }
         }
@@ -67,24 +69,44 @@ public class State {
     }
 
     public State shiftInv() {
-        State State_before_shift=new State();
+        State State_after_shift=new State();
         for(int i=0;i<4;i++){
             for (int j = 0; j < 4; j++) {
-
-                State_before_shift.bytes[i][j]=this.bytes[i][(i-j+4)%4];
+                // ce modulo permet de faire un décalage de i (numéro de ligne) des valeurs de la ligne vers la DROITE 
+                // autrement dit il fait l'inverse que le modulo de la méthode shift
+                State_after_shift.bytes[i][j]=this.bytes[i][(i-j+4)%4];
             }
         }
-        return State_before_shift;
+        return State_after_shift;
     }
 
     public State mult(State prod) {
-        //TODO
-        return null;
+        State State_after_mult=new State();
+        int taille = this.bytes[0][0].block.length;
+        for(int i=0;i<4;i++){
+            for (int j = 0; j < 4; j++) {
+                Block multiplication_matricielle=new Block(taille);
+                for(int x=0;x<4;x++){
+                    //Le xor est équivalent au plus dans notre exercice et le modularMult à la multiplication, on retombre bien sur la formule du produit matriciel.
+                    multiplication_matricielle=multiplication_matricielle.xOr(this.bytes[i][x].modularMult(prod.bytes[x][j]));
+                }
+                State_after_mult.bytes[i][j]=multiplication_matricielle;
+            }
+            
+        }
+        return State_after_mult;
     }
 
     public State xOr(Key key) {
-        //TODO
-        return null;
+        // je ne sais pas si cette fonction doit renvoyer un state ou un bloc,
+        // si jamais il faut changer il suffit d'ajouter .block() au return et changer la signature de la méthode
+        State State_after_XOR=new State();
+        for(int i=0;i<4;i++){
+            for (int j = 0; j < 4; j++) {
+                State_after_XOR.bytes[i][j]=key.elmnt(i, j).xOr(State_after_XOR.bytes[i][j]);
+            }
+        }
+        return State_after_XOR;
     }
 
     public Block block() {
