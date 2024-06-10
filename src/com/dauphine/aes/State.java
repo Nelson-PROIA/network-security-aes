@@ -1,182 +1,242 @@
 package com.dauphine.aes;
 
-import java.util.Arrays;
-
+/**
+ * <p>
+ * Represents the state in the AES encryption process.
+ * This class provides methods for creating, manipulating, and converting the state.
+ * </p>
+ *
+ * <p>
+ * The state is represented as a 2D array of Blocks.
+ * Each block contains binary data and operations for AES transformations.
+ * </p>
+ *
+ * @author Mathieu ANDRIN {@literal <mathieu.andrin@dauphine.eu>}
+ * @see AES
+ * @see Block
+ * @see Key
+ * @see SBox
+ */
 public class State {
 
-    private final static int BIT = 2;
-
+    /**
+     * The 2D array of blocks representing the state.
+     *
+     * @see Block
+     */
     private final Block[][] bytes;
 
+    /**
+     * Constructs a new State with empty blocks.
+     *
+     * @see AES
+     * @see Block
+     */
     public State() {
-        this.bytes = new Block[BIT][BIT];
+        bytes = new Block[AES.NUMBER_BLOCKS][AES.NUMBER_BLOCKS];
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                this.bytes[i][j] = new Block(BIT * 2);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                bytes[i][j] = new Block(AES.NUMBER_BLOCKS * 2);
             }
         }
     }
 
+    /**
+     * Constructs a new State from a single Block.
+     *
+     * @param block The Block to initialize the State.
+     * @see AES
+     * @see Block
+     */
     public State(Block block) {
-        this.bytes = new Block[BIT][BIT];
+        bytes = new Block[AES.NUMBER_BLOCKS][AES.NUMBER_BLOCKS];
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                this.bytes[i][j] = block.getSegment((int) Math.pow(2, BIT), i + j * BIT);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                bytes[i][j] = block.getSegment((int) Math.pow(2, AES.NUMBER_BLOCKS), i + j * AES.NUMBER_BLOCKS);
             }
         }
     }
 
-    public State(State toCopy) {
-        this.bytes = new Block[BIT][BIT];
+    /**
+     * Constructs a new State from a 2D integer array.
+     *
+     * @param values The 2D integer array to initialize the State.
+     * @see AES
+     * @see Block
+     */
+    public State(int[][] values) {
+        bytes = new Block[AES.NUMBER_BLOCKS][AES.NUMBER_BLOCKS];
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                this.bytes[i][j] = toCopy.bytes[i][j].clone();
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                bytes[i][j] = new Block(AES.NUMBER_BLOCKS * 2, values[i][j]);
             }
         }
     }
 
-    public State(int[][] val) {
-        this.bytes = new Block[BIT][BIT];
+    /**
+     * Constructs a new State by copying another State.
+     *
+     * @param other The State to copy.
+     * @see AES
+     * @see Block
+     */
+    public State(State other) {
+        bytes = new Block[AES.NUMBER_BLOCKS][AES.NUMBER_BLOCKS];
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                this.bytes[i][j] = new Block(BIT * 2, val[i][j]);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                bytes[i][j] = other.bytes[i][j].clone();
             }
         }
     }
 
-    // confidence 5/5
+    /**
+     * Performs an XOR operation between this State and a Key.
+     *
+     * @param key The Key to XOR with.
+     * @return A new State resulting from the XOR operation.
+     * @see AES
+     * @see Block
+     * @see Key
+     */
+    public State XOR(Key key) {
+        State newState = new State();
+
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                newState.bytes[i][j] = bytes[i][j].xOr(key.element(j, i));
+            }
+        }
+
+        return newState;
+    }
+
+    /**
+     * Substitutes bytes in the State using the given S-box.
+     *
+     * @param sbox The S-box to use for substitution.
+     * @return A new State with substituted bytes.
+     * @see AES
+     * @see Block
+     * @see SBox
+     */
     public State substitute(SBox sbox) {
         State newState = new State();
 
-        for (int i = 0; i < bytes.length; ++i) {
-            for (int j = 0; j < bytes[i].length; ++j) {
-                newState.bytes[i][j] = sbox.cypher(this.bytes[i][j]);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                newState.bytes[i][j] = sbox.cipher(bytes[i][j]);
             }
         }
 
         return newState;
     }
 
-    // confidence 5/5
+    /**
+     * Shifts rows in the State.
+     *
+     * @return A new State with shifted rows.
+     * @see AES
+     * @see Block
+     */
     public State shift() {
         State newState = new State();
 
-        for (int i = 0; i < BIT; ++i) {
-            for (int j = 0; j < BIT; ++j) {
-                newState.bytes[i][(j + i) % BIT] = this.bytes[i][j];
-            }
-        }
-        
-        return newState;
-    }
-
-    // confidence 5/5
-    public State shiftInv() {
-        State newState = new State();
-
-        for (int i = 0; i < BIT; ++i) {
-            for (int j = 0; j < BIT; ++j) {
-                newState.bytes[i][(j - i + BIT) % BIT] = this.bytes[i][j];
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                newState.bytes[i][(j + i) % AES.NUMBER_BLOCKS] = bytes[i][j];
             }
         }
 
         return newState;
     }
 
-    public State mult(State other) {
+    /**
+     * Inversely shifts rows in the State.
+     *
+     * @return A new State with inversely shifted rows.
+     * @see AES
+     * @see Block
+     */
+    public State shiftInvert() {
         State newState = new State();
-        int size = this.bytes[0][0].bits.length;
 
-        System.out.println("State.mult");
-        System.out.println("\tthis = \n" + this);
-        System.out.println("\tother = \n" + other);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                newState.bytes[i][(j - i + AES.NUMBER_BLOCKS) % AES.NUMBER_BLOCKS] = bytes[i][j];
+            }
+        }
 
-        for (int i = 0; i < BIT; ++i) {
-            System.out.println("\tstart i (" + i + ") -----------");
+        return newState;
+    }
 
-            for (int j = 0; j < BIT; ++j) {
-                System.out.println("\t\tstart j (" + j + ") -----------");
+    /**
+     * Multiplies this State with another State.
+     *
+     * @param other The other State to multiply with.
+     * @return A new State resulting from the multiplication.
+     * @see AES
+     * @see Block
+     */
+    public State multiply(State other) {
+        State newState = new State();
 
-                Block sum = new Block(size);
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                Block sum = new Block(AES.NUMBER_BLOCKS * 2);
 
-                for(int k = 0; k < BIT; ++k) {
-                    System.out.println("\t\t\tstart k (" + k + ") -----------");
-
-                    System.out.println("\t\t\t\tother.bytes[" + i + "][" + k + "] = " + other.bytes[k][j]);
-                    System.out.println("\t\t\t\tbytes[" + k + "][" + j + "] = " + bytes[i][k]);
-
-                    System.out.println("\t\t\t\tsum = " + sum);
-                    System.out.println("\t\t\t\tother.bytes[" + i + "][" + k + "] * bytes[" + k + "][" + j + "] (Block.modularMultiplication) = " + other.bytes[i][k].modularMultiplication(bytes[k][j]));
-
-                    System.out.println("\t\t\t\tsum + (other.bytes[" + i + "][" + k + "] * bytes[" + k + "][" + j + "]) (Block.xOr) = " + sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j])));
+                for (int k = 0; k < AES.NUMBER_BLOCKS; ++k) {
                     sum = sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j]));
-                    //sum = sum.xOr(bytes[i][k].modularMultiplication(other.bytes[k][j]));
                 }
-                System.out.println("\t\t\tend k -----------");
 
                 newState.bytes[i][j] = sum;
-
-                System.out.println("\t\t\tnewState.bytes[" + i + "][" + j + "] = " + newState.bytes[i][j]);
-
-            }
-            System.out.println("\t\t\tend j -----------");
-
-
-        }
-        System.out.println("\tend i -----------\n");
-
-
-        System.out.println("\tnewState = \n" + newState);
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
-
-        return newState;
-    }
-
-    // confidence 5/5
-    public State xOr(Key key) {
-        State newState = new State();
-
-        for (int i = 0; i < BIT; ++i) {
-            for (int j = 0; j < BIT; ++j) {
-                newState.bytes[i][j] = this.bytes[i][j].xOr(key.element(j, i));
-
             }
         }
 
         return newState;
     }
 
-    public Block block() {
-        Block[] blocks = new Block[(int) Math.pow(2, BIT)];
+    /**
+     * Converts the State to a single Block.
+     *
+     * @return The resulting Block.
+     * @see AES
+     * @see Block
+     */
+    public Block toBlock() {
+        Block[] blocks = new Block[(int) Math.pow(2, AES.NUMBER_BLOCKS)];
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                blocks[BIT * j + i] = this.bytes[i][j];
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                blocks[AES.NUMBER_BLOCKS * j + i] = bytes[i][j];
             }
         }
 
         return new Block(blocks);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see AES
+     * @see Block
+     */
+    @Override
     public String toString() {
-        String s = "";
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (int i = 0; i < BIT; i++) {
-            for (int j = 0; j < BIT; j++) {
-                s += this.bytes[i][j] + " ";
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
+                stringBuilder.append(bytes[i][j]).append(" ");
             }
 
-            s += "\n";
+            stringBuilder.append("\n");
         }
 
-        return s;
+        return stringBuilder.toString();
     }
 
 }

@@ -3,21 +3,29 @@ package com.dauphine.aes;
 import java.util.Arrays;
 
 /**
- * Represents a block of binary data.
- * This class provides methods for creating, manipulating, and converting binary data blocks.
+ * <p>
+ * Represents a block of binary data. This class provides methods for creating,
+ * manipulating, and converting binary data blocks.
+ * </p>
+ *
+ * <p>
+ * This implementation supports various operations like XOR, left shift,
+ * modular multiplication, and segment extraction.
+ * </p>
  *
  * @author Sébastien GIRET-IHMAUS {@literal <sebastien.giret-ihmaus@dauphine.eu>}
  * @author Nelson PROIA {@literal <nelson.proia@dauphine.eu>}
+ * @see AES
+ * @see Key
+ * @see SBox
  */
 public class Block implements Cloneable {
 
     /**
      * Represents the generator polynomial used in AES key expansion.
      * This polynomial is used in certain key expansion operations.
-     *
-     * @see Block
      */
-    public final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
+    public final static Block GENERATOR_POLYNOMIAL = new Block("0011");
 
     /**
      * The array of bits representing the binary data.
@@ -30,7 +38,7 @@ public class Block implements Cloneable {
      * @param size The size of the block.
      */
     public Block(int size) {
-        this.bits = new boolean[size];
+        bits = new boolean[size];
     }
 
     /**
@@ -40,11 +48,10 @@ public class Block implements Cloneable {
      * @param value The value to initialize the block with.
      */
     public Block(int size, int value) {
-        // TODO
         this(size);
 
-        for(int i = size - 1; i > -1; i--) {
-            this.bits[i] = ((value % 2) == 1);
+        for (int i = size - 1; i >= 0; --i) {
+            bits[i] = (value % 2) == 1;
             value /= 2;
         }
     }
@@ -57,7 +64,7 @@ public class Block implements Cloneable {
     public Block(String bits) {
         this(bits.length());
 
-        for (int i = 0; i < bits.length(); i++) {
+        for (int i = 0; i < bits.length(); ++i) {
             this.bits[i] = bits.charAt(i) == '1';
         }
     }
@@ -77,62 +84,32 @@ public class Block implements Cloneable {
      * @param blocks The array of blocks to construct the block from.
      */
     public Block(Block[] blocks) {
-        int size = 0;
-
-        for (Block block : blocks) {
-            size += block.bits.length;
-        }
-
-        this.bits = new boolean[size];
+        int size = Arrays.stream(blocks).mapToInt(block -> block.bits.length).sum();
+        bits = new boolean[size];
 
         int index = 0;
 
         for (Block block : blocks) {
-            for (boolean bit : block.bits) {
-                this.bits[index++] = bit;
-            }
+            System.arraycopy(block.bits, 0, bits, index, block.bits.length);
+            index += block.bits.length;
         }
     }
 
     /**
-     * Converts the block to its decimal representation.
-     *
-     * @return The decimal representation of the block.
+     * {@inheritDoc}
+     * <p>
+     * Creates a deep copy of the block.
      */
-    public int toDecimal() {
-        int decimalValue = 0;
+    @Override
+    public Block clone() {
+        try {
+            Block clone = (Block) super.clone();
+            clone.bits = bits.clone();
 
-        for (boolean bit : this.bits) {
-            decimalValue = (decimalValue << 1) | (bit ? 1 : 0);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
-
-        return decimalValue;
-    }
-
-    /**
-     * Converts the block to a hexadecimal string.
-     *
-     * @return The hexadecimal string representation of the block.
-     */
-    public String toHexadecimalString() {
-        StringBuilder result = new StringBuilder(this.bits.length / 4);
-
-        for (int i = 0; i < this.bits.length; i += 4) {
-            int val = 0;
-            for (int j = 0; j < 4; j++) {
-                if (this.bits[i + j]) {
-                    val += 1 << (3 - j);
-                }
-            }
-
-            if (val < 10) {
-                result.append(val);
-            } else {
-                result.append((char) ('A' + val - 10));
-            }
-        }
-
-        return result.toString();
     }
 
     /**
@@ -143,10 +120,10 @@ public class Block implements Cloneable {
      * @return The segment block.
      */
     public Block getSegment(int numberSegments, int index) {
-        int segmentLength = this.bits.length / numberSegments;
+        int segmentLength = bits.length / numberSegments;
         boolean[] segment = new boolean[segmentLength];
 
-        System.arraycopy(this.bits, index * segmentLength, segment, 0, segmentLength);
+        System.arraycopy(bits, index * segmentLength, segment, 0, segmentLength);
 
         return new Block(segment);
     }
@@ -178,10 +155,10 @@ public class Block implements Cloneable {
      * @return The resulting block.
      */
     public Block xOr(Block other) {
-        boolean[] resultBits = new boolean[this.bits.length];
+        boolean[] resultBits = new boolean[bits.length];
 
-        for (int i = 0; i < this.bits.length; ++i) {
-            resultBits[i] = this.bits[i] ^ other.bits[i];
+        for (int i = 0; i < bits.length; ++i) {
+            resultBits[i] = bits[i] ^ other.bits[i];
         }
 
         return new Block(resultBits);
@@ -193,10 +170,10 @@ public class Block implements Cloneable {
      * @return The resulting block after left shift.
      */
     public Block leftShift() {
-        boolean[] shiftedBits = new boolean[this.bits.length];
+        boolean[] shiftedBits = new boolean[bits.length];
 
-        System.arraycopy(this.bits, 1, shiftedBits, 0, this.bits.length - 1);
-        shiftedBits[this.bits.length - 1] = false;
+        System.arraycopy(bits, 1, shiftedBits, 0, bits.length - 1);
+        shiftedBits[bits.length - 1] = false;
 
         return new Block(shiftedBits);
     }
@@ -207,11 +184,7 @@ public class Block implements Cloneable {
      * @return The resulting block after modular multiplication.
      */
     public Block modularMultiplicationByX() {
-        if (!this.bits[0]) {
-            return this.leftShift();
-        } else {
-            return this.leftShift().xOr(GENERATOR_POLYNOMIAL);
-        }
+        return bits[0] ? leftShift().xOr(GENERATOR_POLYNOMIAL) : leftShift();
     }
 
     /**
@@ -221,12 +194,8 @@ public class Block implements Cloneable {
      * @return The resulting block after multiplication.
      */
     public Block modularMultiplication(Block other) {
-        System.out.println();
-        Block result = new Block(this.bits.length);
-        Block multiplier = this.clone();
-
-        System.out.println("result = " + result);
-        System.out.println("multiplier = " + multiplier);
+        Block result = new Block(bits.length);
+        Block multiplier = clone();
 
         for (int i = other.bits.length - 1; i >= 0; --i) {
             if (other.bits[i]) {
@@ -239,70 +208,26 @@ public class Block implements Cloneable {
         return result;
     }
 
-    private final static int BIT = 2;
-
     /**
      * Performs the 'g' operation on the block.
      *
      * @param sbox          The S-box used in the operation.
      * @param roundConstant The round constant used in the operation.
      * @return The resulting block after the 'g' operation.
+     * @see AES
      * @see SBox
      */
     public Block g(SBox sbox, Block roundConstant) {
-        Block[] subBlocks = new Block[BIT];
+        Block[] subBlocks = new Block[AES.NUMBER_BLOCKS];
 
-        for (int i = 0; i < BIT; ++i) {
-            subBlocks[i] = sbox.cypher(this.getSegment(BIT, (i + 1) % BIT));
+        for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
+            subBlocks[i] = sbox.cipher(getSegment(AES.NUMBER_BLOCKS, (i + 1) % AES.NUMBER_BLOCKS));
         }
 
         Block newBlock = new Block(subBlocks);
-        roundConstant = new Block( roundConstant.toString() + "0".repeat(BIT * 6));
+        roundConstant = new Block(roundConstant.toString() + "0".repeat(AES.NUMBER_BLOCKS * 6));
 
         return newBlock.xOr(roundConstant);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Creates a deep copy of the block.
-     */
-    @Override
-    public Block clone() {
-        try {
-            Block clone = (Block) super.clone();
-            clone.bits = this.bits.clone();
-
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Converts the block to a string of '0's and '1's representing its bits.
-     */
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder(this.bits.length);
-
-        for (boolean bit : this.bits) {
-            result.append(bit ? '1' : '0');
-        }
-
-        return result.toString();
-    }
-
-    /**
-     * Converts a block to its decimal representation.
-     *
-     * @param block The block to convert.
-     * @return The decimal representation of the block.
-     */
-    public int blockToDecimal(Block block) {
-        return block.toDecimal();
     }
 
     /**
@@ -311,6 +236,7 @@ public class Block implements Cloneable {
      * @param string    The string to convert.
      * @param blockSize The size of each block.
      * @return An array of blocks.
+     * @see AES
      */
     public static Block[] stringToBlocks(String string, int blockSize) {
         int numberBlocks = string.length() / blockSize;
@@ -320,11 +246,11 @@ public class Block implements Cloneable {
             Block[] temp = new Block[blockSize];
 
             for (int j = 0; j < blockSize; ++j) {
-                Block byteBlock = new Block(BIT * 2);
+                Block byteBlock = new Block(AES.NUMBER_BLOCKS * 2);
                 char ch = string.charAt(i * blockSize + j);
 
-                for (int k = 0; k < BIT * 2; ++k) {
-                    byteBlock.bits[((BIT * 2) - 1) - k] = (ch & (1 << k)) != 0;
+                for (int k = 0; k < AES.NUMBER_BLOCKS * 2; ++k) {
+                    byteBlock.bits[(AES.NUMBER_BLOCKS * 2 - 1) - k] = (ch & (1 << k)) != 0;
                 }
 
                 temp[j] = byteBlock;
@@ -341,18 +267,19 @@ public class Block implements Cloneable {
      *
      * @param blocks The array of blocks to convert.
      * @return The resulting string.
+     * @see AES
      */
     public static String blocksToString(Block[] blocks) {
         StringBuilder result = new StringBuilder();
 
         for (Block block : blocks) {
-            int numberBytes = block.bits.length / (BIT * 2);
+            int numberBytes = block.bits.length / (AES.NUMBER_BLOCKS * 2);
 
             for (int i = 0; i < numberBytes; ++i) {
                 char value = 0;
 
-                for (int j = 0; j < (BIT * 2); ++j) {
-                    if (block.bits[i * ((BIT * 2) + ((BIT * 2) - 1)) - j]) {
+                for (int j = 0; j < (AES.NUMBER_BLOCKS * 2); ++j) {
+                    if (block.bits[i * (AES.NUMBER_BLOCKS * 2) + j]) {
                         value |= (char) (1 << j);
                     }
                 }
@@ -364,21 +291,59 @@ public class Block implements Cloneable {
         return result.toString();
     }
 
-    public static void main(String[] args) {
-        Block f = new Block("01010111");
-        Block g = new Block("10000011");
+    /**
+     * Converts the block to its decimal representation.
+     *
+     * @return The decimal representation of the block.
+     */
+    public int toDecimal() {
+        int decimalValue = 0;
 
-        System.out.println("GENERATOR_POLYNOMIAL = " + GENERATOR_POLYNOMIAL);
+        for (boolean bit : bits) {
+            decimalValue = (decimalValue << 1) | (bit ? 1 : 0);
+        }
 
-        // f + g mod m -> XOR
+        return decimalValue;
+    }
 
-        System.out.println("f = " + f);
-        System.out.println("g = " + g);
+    /**
+     * Converts the block to a hexadecimal string.
+     *
+     * @return The hexadecimal string representation of the block.
+     */
+    public String toHexadecimalString() {
+        // TODO Not sure implementation works
+        StringBuilder stringBuilder = new StringBuilder(bits.length / 4);
 
-        System.out.println("f XOR g <=> f + g mod m = " + f.xOr(g));
+        for (int i = 0; i < bits.length; i += 4) {
+            int val = 0;
 
+            for (int j = 0; j < 4; ++j) {
+                if (bits[i + j]) {
+                    val += 1 << (3 - j);
+                }
+            }
 
-        System.out.println("f * g = " + f.modularMultiplication(g));
+            stringBuilder.append(val < 10 ? val : (char) ('A' + val - 10));
+        }
+
+        return stringBuilder.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Converts the block to a string of '0's and '1's representing its bits.
+     */
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder(bits.length);
+
+        for (boolean bit : bits) {
+            stringBuilder.append(bit ? '1' : '0');
+        }
+
+        return stringBuilder.toString();
     }
 
 }
