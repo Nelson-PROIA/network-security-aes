@@ -1,6 +1,7 @@
 package com.dauphine.aes;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * <p>
@@ -312,19 +313,12 @@ public class Block implements Cloneable {
      * @return The hexadecimal string representation of the block.
      */
     public String toHexadecimalString() {
-        // TODO Not sure implementation works
-        StringBuilder stringBuilder = new StringBuilder(bits.length / 4);
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (int i = 0; i < bits.length; i += 4) {
-            int val = 0;
+        for (int i = 0; i < this.bits.length; i += 4) {
+            int val = (this.bits[i] ? 8 : 0) + (this.bits[i + 1] ? 4 : 0) + (this.bits[i + 2] ? 2 : 0) + (this.bits[i + 3] ? 1 : 0);
 
-            for (int j = 0; j < 4; ++j) {
-                if (bits[i + j]) {
-                    val += 1 << (3 - j);
-                }
-            }
-
-            stringBuilder.append(val < 10 ? val : (char) ('A' + val - 10));
+            stringBuilder.append(Integer.toHexString(val).toUpperCase(Locale.ROOT));
         }
 
         return stringBuilder.toString();
