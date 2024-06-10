@@ -106,20 +106,21 @@ public class State {
                 for(int k = 0; k < BIT; ++k) {
                     System.out.println("\t\t\tstart k (" + k + ") -----------");
 
-                    System.out.println("\t\t\t\tbytes[i][k] = " + bytes[i][k]);
-                    System.out.println("\t\t\t\tother.bytes[k][j] = " + other.bytes[k][j]);
+                    System.out.println("\t\t\t\tother.bytes[" + i + "][" + k + "] = " + other.bytes[k][j]);
+                    System.out.println("\t\t\t\tbytes[" + k + "][" + j + "] = " + bytes[i][k]);
 
                     System.out.println("\t\t\t\tsum = " + sum);
-                    System.out.println("\t\t\t\tbytes[i][k] * other.bytes[k][j] (Block.modularMultiplication) = " + bytes[i][k].modularMultiplication(other.bytes[k][j]));
+                    System.out.println("\t\t\t\tother.bytes[" + i + "][" + k + "] * bytes[" + k + "][" + j + "] (Block.modularMultiplication) = " + other.bytes[i][k].modularMultiplication(bytes[k][j]));
 
-                    System.out.println("\t\t\t\tsum + (bytes[i][k] * other.bytes[k][j]) (Block.xOr) = " + sum.xOr(bytes[i][k].modularMultiplication(other.bytes[k][j])));
+                    System.out.println("\t\t\t\tsum + (other.bytes[" + i + "][" + k + "] * bytes[" + k + "][" + j + "]) (Block.xOr) = " + sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j])));
                     sum = sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j]));
+                    //sum = sum.xOr(bytes[i][k].modularMultiplication(other.bytes[k][j]));
                 }
                 System.out.println("\t\t\tend k -----------");
 
                 newState.bytes[i][j] = sum;
 
-                System.out.println("\t\t\tnewState.bytes[i][j] = " + newState.bytes[i][j]);
+                System.out.println("\t\t\tnewState.bytes[" + i + "][" + j + "] = " + newState.bytes[i][j]);
 
             }
             System.out.println("\t\t\tend j -----------");

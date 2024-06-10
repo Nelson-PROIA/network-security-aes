@@ -17,7 +17,7 @@ public class Block implements Cloneable {
      *
      * @see Block
      */
-    public final static Block GENERATOR_POLYNOMIAL = new Block("0011");
+    public final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
 
     /**
      * The array of bits representing the binary data.
@@ -207,13 +207,11 @@ public class Block implements Cloneable {
      * @return The resulting block after modular multiplication.
      */
     public Block modularMultiplicationByX() {
-        Block result = this.leftShift();
-
-        if (this.bits[0]) {
-            return result.xOr(GENERATOR_POLYNOMIAL);
+        if (!this.bits[0]) {
+            return this.leftShift();
+        } else {
+            return this.leftShift().xOr(GENERATOR_POLYNOMIAL);
         }
-
-        return result;
     }
 
     /**
@@ -223,11 +221,15 @@ public class Block implements Cloneable {
      * @return The resulting block after multiplication.
      */
     public Block modularMultiplication(Block other) {
+        System.out.println();
         Block result = new Block(this.bits.length);
         Block multiplier = this.clone();
 
-        for (boolean bit : other.bits) {
-            if (bit) {
+        System.out.println("result = " + result);
+        System.out.println("multiplier = " + multiplier);
+
+        for (int i = other.bits.length - 1; i >= 0; --i) {
+            if (other.bits[i]) {
                 result = result.xOr(multiplier);
             }
 
@@ -360,6 +362,23 @@ public class Block implements Cloneable {
         }
 
         return result.toString();
+    }
+
+    public static void main(String[] args) {
+        Block f = new Block("01010111");
+        Block g = new Block("10000011");
+
+        System.out.println("GENERATOR_POLYNOMIAL = " + GENERATOR_POLYNOMIAL);
+
+        // f + g mod m -> XOR
+
+        System.out.println("f = " + f);
+        System.out.println("g = " + g);
+
+        System.out.println("f XOR g <=> f + g mod m = " + f.xOr(g));
+
+
+        System.out.println("f * g = " + f.modularMultiplication(g));
     }
 
 }
