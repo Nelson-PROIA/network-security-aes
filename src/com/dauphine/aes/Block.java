@@ -26,7 +26,7 @@ public class Block implements Cloneable {
      * Represents the generator polynomial used in AES key expansion.
      * This polynomial is used in certain key expansion operations.
      */
-    public final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
+    public final static Block GENERATOR_POLYNOMIAL = new Block("0011");
 
     /**
      * The array of bits representing the binary data.
