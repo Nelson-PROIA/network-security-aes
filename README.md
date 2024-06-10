@@ -1,6 +1,6 @@
 # AES Encryption Algorithm Implementation
 
-This project provides a Java implementation of a simplified AES (Advanced Encryption Standard) encryption algorithm. AES
+This project provides a Java implementation of AES (Advanced Encryption Standard) encryption algorithm. AES
 is a symmetric key encryption algorithm widely used for securing sensitive data.
 
 ## Overview
