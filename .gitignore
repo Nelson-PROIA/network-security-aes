@@ -11,6 +11,7 @@ target/
 
 # IntelliJ IDEA files
 .idea/
+*.iml
 
 # Eclipse files
 .classpath
