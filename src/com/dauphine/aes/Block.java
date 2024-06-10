@@ -1,5 +1,7 @@
 package com.dauphine.aes;
 
+import java.util.Arrays;
+
 /**
  * Represents a block of binary data.
  * This class provides methods for creating, manipulating, and converting binary data blocks.
@@ -15,7 +17,7 @@ public class Block implements Cloneable {
      *
      * @see Block
      */
-    public final static Block GENERATOR_POLYNOMIAL = new Block("00011011");
+    public final static Block GENERATOR_POLYNOMIAL = new Block("0011");
 
     /**
      * The array of bits representing the binary data.
@@ -40,6 +42,7 @@ public class Block implements Cloneable {
     public Block(int size, int value) {
         // TODO
         this(size);
+
         for(int i = size - 1; i > -1; i--) {
             this.bits[i] = ((value % 2) == 1);
             value /= 2;
@@ -207,7 +210,7 @@ public class Block implements Cloneable {
         Block result = this.leftShift();
 
         if (this.bits[0]) {
-            return result.modularMultiplication(GENERATOR_POLYNOMIAL);
+            return result.xOr(GENERATOR_POLYNOMIAL);
         }
 
         return result;
@@ -234,6 +237,8 @@ public class Block implements Cloneable {
         return result;
     }
 
+    private final static int BIT = 2;
+
     /**
      * Performs the 'g' operation on the block.
      *
@@ -243,14 +248,14 @@ public class Block implements Cloneable {
      * @see SBox
      */
     public Block g(SBox sbox, Block roundConstant) {
-        Block[] subBlocks = new Block[4];
+        Block[] subBlocks = new Block[BIT];
 
-        for (int i = 0; i < 4; ++i) {
-            subBlocks[i] = sbox.cypher(this.getSegment(4, (i + 1) % 4));
+        for (int i = 0; i < BIT; ++i) {
+            subBlocks[i] = sbox.cypher(this.getSegment(BIT, (i + 1) % BIT));
         }
 
         Block newBlock = new Block(subBlocks);
-        roundConstant = new Block( roundConstant.toString() + "0".repeat(24));
+        roundConstant = new Block( roundConstant.toString() + "0".repeat(BIT * 6));
 
         return newBlock.xOr(roundConstant);
     }
@@ -313,11 +318,11 @@ public class Block implements Cloneable {
             Block[] temp = new Block[blockSize];
 
             for (int j = 0; j < blockSize; ++j) {
-                Block byteBlock = new Block(8);
+                Block byteBlock = new Block(BIT * 2);
                 char ch = string.charAt(i * blockSize + j);
 
-                for (int k = 0; k < 8; ++k) {
-                    byteBlock.bits[7 - k] = (ch & (1 << k)) != 0;
+                for (int k = 0; k < BIT * 2; ++k) {
+                    byteBlock.bits[((BIT * 2) - 1) - k] = (ch & (1 << k)) != 0;
                 }
 
                 temp[j] = byteBlock;
@@ -339,13 +344,13 @@ public class Block implements Cloneable {
         StringBuilder result = new StringBuilder();
 
         for (Block block : blocks) {
-            int numberBytes = block.bits.length / 8;
+            int numberBytes = block.bits.length / (BIT * 2);
 
             for (int i = 0; i < numberBytes; ++i) {
                 char value = 0;
 
-                for (int j = 0; j < 8; ++j) {
-                    if (block.bits[i * 8 + 7 - j]) {
+                for (int j = 0; j < (BIT * 2); ++j) {
+                    if (block.bits[i * ((BIT * 2) + ((BIT * 2) - 1)) - j]) {
                         value |= (char) (1 << j);
                     }
                 }

@@ -1,81 +1,86 @@
 package com.dauphine.aes;
 
+import java.util.Arrays;
+
 public class State {
+
+    private final static int BIT = 2;
 
     private final Block[][] bytes;
 
     public State() {
-        this.bytes = new Block[4][4];
+        this.bytes = new Block[BIT][BIT];
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                this.bytes[i][j] = new Block(8);
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
+                this.bytes[i][j] = new Block(BIT * 2);
             }
         }
     }
 
     public State(Block block) {
-        this.bytes = new Block[4][4];
+        this.bytes = new Block[BIT][BIT];
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                this.bytes[i][j] = block.getSegment(16, i + j * 4);
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
+                this.bytes[i][j] = block.getSegment((int) Math.pow(2, BIT), i + j * BIT);
             }
         }
     }
 
     public State(State toCopy) {
-        this.bytes = new Block[4][4];
+        this.bytes = new Block[BIT][BIT];
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
                 this.bytes[i][j] = toCopy.bytes[i][j].clone();
             }
         }
     }
 
     public State(int[][] val) {
-        this.bytes = new Block[4][4];
+        this.bytes = new Block[BIT][BIT];
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                this.bytes[i][j] = new Block(8, val[i][j]);
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
+                this.bytes[i][j] = new Block(BIT * 2, val[i][j]);
             }
         }
     }
 
+    // confidence 5/5
     public State substitute(SBox sbox) {
         State newState = new State();
 
         for (int i = 0; i < bytes.length; ++i) {
             for (int j = 0; j < bytes[i].length; ++j) {
-                Block newBlock = sbox.cypher(this.bytes[i][j]);
-
-                newState.bytes[i][j] = newBlock;
-            }  
+                newState.bytes[i][j] = sbox.cypher(this.bytes[i][j]);
+            }
         }
 
         return newState;
     }
 
+    // confidence 5/5
     public State shift() {
         State newState = new State();
 
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                newState.bytes[i][(j + i) % 4] = this.bytes[i][j];
+        for (int i = 0; i < BIT; ++i) {
+            for (int j = 0; j < BIT; ++j) {
+                newState.bytes[i][(j + i) % BIT] = this.bytes[i][j];
             }
         }
         
         return newState;
     }
 
+    // confidence 5/5
     public State shiftInv() {
         State newState = new State();
 
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                newState.bytes[i][(j - i + 4) % 4] = this.bytes[i][j];
+        for (int i = 0; i < BIT; ++i) {
+            for (int j = 0; j < BIT; ++j) {
+                newState.bytes[i][(j - i + BIT) % BIT] = this.bytes[i][j];
             }
         }
 
@@ -86,27 +91,61 @@ public class State {
         State newState = new State();
         int size = this.bytes[0][0].bits.length;
 
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
+        System.out.println("State.mult");
+        System.out.println("\tthis = \n" + this);
+        System.out.println("\tother = \n" + other);
+
+        for (int i = 0; i < BIT; ++i) {
+            System.out.println("\tstart i (" + i + ") -----------");
+
+            for (int j = 0; j < BIT; ++j) {
+                System.out.println("\t\tstart j (" + j + ") -----------");
+
                 Block sum = new Block(size);
 
-                for(int k = 0; k < 4; ++k) {
-                    sum = sum.xOr(bytes[i][k].modularMultiplication(other.bytes[k][j]));
+                for(int k = 0; k < BIT; ++k) {
+                    System.out.println("\t\t\tstart k (" + k + ") -----------");
+
+                    System.out.println("\t\t\t\tbytes[i][k] = " + bytes[i][k]);
+                    System.out.println("\t\t\t\tother.bytes[k][j] = " + other.bytes[k][j]);
+
+                    System.out.println("\t\t\t\tsum = " + sum);
+                    System.out.println("\t\t\t\tbytes[i][k] * other.bytes[k][j] (Block.modularMultiplication) = " + bytes[i][k].modularMultiplication(other.bytes[k][j]));
+
+                    System.out.println("\t\t\t\tsum + (bytes[i][k] * other.bytes[k][j]) (Block.xOr) = " + sum.xOr(bytes[i][k].modularMultiplication(other.bytes[k][j])));
+                    sum = sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j]));
                 }
+                System.out.println("\t\t\tend k -----------");
 
                 newState.bytes[i][j] = sum;
+
+                System.out.println("\t\t\tnewState.bytes[i][j] = " + newState.bytes[i][j]);
+
             }
+            System.out.println("\t\t\tend j -----------");
+
+
         }
+        System.out.println("\tend i -----------\n");
+
+
+        System.out.println("\tnewState = \n" + newState);
+
+        System.out.println();
+        System.out.println();
+        System.out.println();
 
         return newState;
     }
 
+    // confidence 5/5
     public State xOr(Key key) {
         State newState = new State();
 
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                newState.bytes[i][j] = key.element(j, i).xOr(this.bytes[i][j]);
+        for (int i = 0; i < BIT; ++i) {
+            for (int j = 0; j < BIT; ++j) {
+                newState.bytes[i][j] = this.bytes[i][j].xOr(key.element(j, i));
+
             }
         }
 
@@ -114,11 +153,11 @@ public class State {
     }
 
     public Block block() {
-        Block[] blocks = new Block[16];
+        Block[] blocks = new Block[(int) Math.pow(2, BIT)];
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                blocks[4 * j + i] = this.bytes[i][j];
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
+                blocks[BIT * j + i] = this.bytes[i][j];
             }
         }
 
@@ -128,8 +167,8 @@ public class State {
     public String toString() {
         String s = "";
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < BIT; i++) {
+            for (int j = 0; j < BIT; j++) {
                 s += this.bytes[i][j] + " ";
             }
 

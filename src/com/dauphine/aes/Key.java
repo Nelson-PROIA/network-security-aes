@@ -9,6 +9,8 @@ package com.dauphine.aes;
  */
 public class Key {
 
+    private final static int BIT = 2;
+
     /**
      * Array of blocks representing the key.
      *
@@ -22,10 +24,10 @@ public class Key {
      * @see Block
      */
     public Key() {
-        bytes = new Block[4];
+        bytes = new Block[BIT];
 
-        for (int i = 0; i < 4; i++) {
-            bytes[i] = new Block(32);
+        for (int i = 0; i < BIT; i++) {
+            bytes[i] = new Block(BIT * 8);
         }
     }
 
@@ -36,10 +38,10 @@ public class Key {
      * @see Block
      */
     public Key(Block block) {
-        bytes = new Block[4];
+        bytes = new Block[BIT];
 
-        for (int i = 0; i < 4; i++) {
-            bytes[i] = block.getSegment(4, i);
+        for (int i = 0; i < BIT; i++) {
+            bytes[i] = block.getSegment(BIT, i);
         }
     }
 
@@ -50,9 +52,9 @@ public class Key {
      * @see Block
      */
     public Key(Block[] blocks) {
-        bytes = new Block[4];
+        bytes = new Block[BIT];
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < BIT; i++) {
             bytes[i] = blocks[i].clone();
         }
     }
@@ -75,7 +77,7 @@ public class Key {
      * @see Block
      */
     public Block element(int i, int j) {
-        return bytes[i].getSegment(4, j);
+        return bytes[i].getSegment(BIT, j);
     }
 
     /**
@@ -87,17 +89,17 @@ public class Key {
      * @see Block
      */
     public Key[] genSubKeys(SBox sBox) {
-        Block roundConstant = new Block(8, 1);
-        Key[] subKeys = new Key[11];
+        Block roundConstant = new Block(BIT * 2, (int) Math.pow(2, ((BIT * 2) - 1)));
+        Key[] subKeys = new Key[3]; // 11 (nb rounds)
         subKeys[0] = new Key(this);
 
-        for (int i = 1; i <= 10; ++i) {
-            Block[] nextKeyBlocks = new Block[4];
+        for (int i = 1; i <= 2; ++i) { // 11 - 1
+            Block[] nextKeyBlocks = new Block[BIT];
             Block gApplied = subKeys[i - 1].bytes[bytes.length - 1].g(sBox, roundConstant);
 
             nextKeyBlocks[0] = subKeys[i - 1].bytes[0].xOr(gApplied);
 
-            for (int j = 1; j < 4; ++j) {
+            for (int j = 1; j < BIT; ++j) {
                 nextKeyBlocks[j] = subKeys[i - 1].bytes[j].xOr(nextKeyBlocks[j - 1]);
             }
 
