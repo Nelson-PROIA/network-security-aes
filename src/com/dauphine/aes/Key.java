@@ -108,7 +108,7 @@ public class Key {
      * @see Key
      * @see SBox
      */
-    public Key[] genSubKeys(SBox sBox) {
+    public Key[] generateSubKeys(SBox sBox) {
         Block roundConstant = new Block(AES.NUMBER_BLOCKS * 2, (int) Math.pow(2, ((AES.NUMBER_BLOCKS * 2) - 1)));
         Key[] subKeys = new Key[AES.NUMBER_ROUNDS];
         subKeys[0] = new Key(this);
@@ -117,10 +117,10 @@ public class Key {
             Block[] nextKeyBlocks = new Block[AES.NUMBER_BLOCKS];
             Block gApplied = subKeys[i - 1].bytes[bytes.length - 1].g(sBox, roundConstant);
 
-            nextKeyBlocks[0] = subKeys[i - 1].bytes[0].xOr(gApplied);
+            nextKeyBlocks[0] = subKeys[i - 1].bytes[0].XOR(gApplied);
 
             for (int j = 1; j < AES.NUMBER_BLOCKS; ++j) {
-                nextKeyBlocks[j] = subKeys[i - 1].bytes[j].xOr(nextKeyBlocks[j - 1]);
+                nextKeyBlocks[j] = subKeys[i - 1].bytes[j].XOR(nextKeyBlocks[j - 1]);
             }
 
             subKeys[i] = new Key(nextKeyBlocks);

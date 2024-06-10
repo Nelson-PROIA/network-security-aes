@@ -107,7 +107,7 @@ public class State {
 
         for (int i = 0; i < AES.NUMBER_BLOCKS; ++i) {
             for (int j = 0; j < AES.NUMBER_BLOCKS; ++j) {
-                newState.bytes[i][j] = bytes[i][j].xOr(key.element(j, i));
+                newState.bytes[i][j] = bytes[i][j].XOR(key.element(j, i));
             }
         }
 
@@ -189,7 +189,7 @@ public class State {
                 Block sum = new Block(AES.NUMBER_BLOCKS * 2);
 
                 for (int k = 0; k < AES.NUMBER_BLOCKS; ++k) {
-                    sum = sum.xOr(other.bytes[i][k].modularMultiplication(bytes[k][j]));
+                    sum = sum.XOR(other.bytes[i][k].modularMultiplication(bytes[k][j]));
                 }
 
                 newState.bytes[i][j] = sum;
