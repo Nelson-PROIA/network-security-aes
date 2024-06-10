@@ -117,7 +117,7 @@ public class AES {
         stateInvert = new State(stateInvertValues);
 
         Key temp = new Key(key);
-        keys = temp.genSubKeys(sBox);
+        keys = temp.generateSubKeys(sBox);
     }
 
     /**

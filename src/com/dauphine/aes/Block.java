@@ -155,7 +155,7 @@ public class Block implements Cloneable {
      * @param other The other block to perform XOR with.
      * @return The resulting block.
      */
-    public Block xOr(Block other) {
+    public Block XOR(Block other) {
         boolean[] resultBits = new boolean[bits.length];
 
         for (int i = 0; i < bits.length; ++i) {
@@ -185,7 +185,7 @@ public class Block implements Cloneable {
      * @return The resulting block after modular multiplication.
      */
     public Block modularMultiplicationByX() {
-        return bits[0] ? leftShift().xOr(GENERATOR_POLYNOMIAL) : leftShift();
+        return bits[0] ? leftShift().XOR(GENERATOR_POLYNOMIAL) : leftShift();
     }
 
     /**
@@ -200,7 +200,7 @@ public class Block implements Cloneable {
 
         for (int i = other.bits.length - 1; i >= 0; --i) {
             if (other.bits[i]) {
-                result = result.xOr(multiplier);
+                result = result.XOR(multiplier);
             }
 
             multiplier = multiplier.modularMultiplicationByX();
@@ -228,7 +228,7 @@ public class Block implements Cloneable {
         Block newBlock = new Block(subBlocks);
         roundConstant = new Block(roundConstant.toString() + "0".repeat(AES.NUMBER_BLOCKS * 6));
 
-        return newBlock.xOr(roundConstant);
+        return newBlock.XOR(roundConstant);
     }
 
     /**
