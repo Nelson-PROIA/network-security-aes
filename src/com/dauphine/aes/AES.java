@@ -257,7 +257,7 @@ public class AES {
  * modular multiplication, and segment extraction.
  * </p>
  *
- * @author Sébastien GIRET-IHMAUS {@literal <sebastien.giret-ihmaus@dauphine.eu>}
+ * @author Sébastien GIRET-IMHAUS {@literal <sebastien.giret-imhaus@dauphine.eu>}
  * @author Nelson PROIA {@literal <nelson.proia@dauphine.eu>}
  * @see AES
  * @see Key
@@ -596,7 +596,7 @@ class Block implements Cloneable {
  * can generate sub-keys for AES rounds.
  * </p>
  *
- * @author Sébastien GIRET-IHMAUS {@literal <sebastien.giret-ihmaus@dauphine.eu>}
+ * @author Sébastien GIRET-IMHAUS {@literal <sebastien.giret-imhaus@dauphine.eu>}
  * @author Nelson PROIA {@literal <nelson.proia@dauphine.eu>}
  * @see AES
  * @see Block

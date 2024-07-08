@@ -46,7 +46,7 @@ System.out.println("Decipher: "+decipherBlock);
 ## Contributors
 
 - **Ricardo BOKA** - [ricardo.boka@dauphine.eu](mailto:ricardo.boka@dauphine.eu),
-- **Sébastien GIRET-IHMAUS** - [sebastien.giret-ihmaus@dauphine.eu](mailto:sebastien.giret-ihmaus@dauphine.eu),
+- **Sébastien GIRET-IMHAUS** - [sebastien.giret-imhaus@dauphine.eu](mailto:sebastien.giret-ihmaus@dauphine.eu),
 - **Nelson PROIA** - [nelson.proia@dauphine.eu](mailto:nelson.proia@dauphine.eu),
 - **Mathieu ANDRIN** - [mathieu.andrin@dauphine.eu](mailto:mathieu.andrin@dauphine.eu).
 
